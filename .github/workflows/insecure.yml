@@ -1,18 +1,31 @@
-name: SonarQube Scan
+name: Snyk SCA Scan
 
 on:
   push:
+    branches: [ "snyk" ]
   pull_request:
 
 jobs:
-  scan:
+  snyk:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v2
+      # Ensure Node.js is installed as required by the project prerequisites [1]
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Using a modern LTS version
+
+      # This step creates the node_modules folder Snyk is looking for
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
         env:
-          SONAR_TOKEN: sqp_e881007168e36494940f5419066f4aac0838daf4
-          SONAR_HOST_URL: http://100.31.46.43:9000/
+          SNYK_TOKEN: 0399b81c-4276-418d-914f-b5473d2161c4
+        with:
+          # This tells Snyk to look at the dependencies you just installed
+          args: --all-projects --severity-threshold=high
